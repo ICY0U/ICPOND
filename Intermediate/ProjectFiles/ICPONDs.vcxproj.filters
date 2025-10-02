@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="..\..\ICPONDs.uproject" />
+    <Filter Include="Source">
+      <UniqueIdentifier>{F31BBDD1-B3E8-3BCC-9652-680E16935819}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\ICPONDs.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\Source\ICPONDsEditor.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\README.md" />
+    <Filter Include="Config">
+      <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Config\DefaultEngine.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultGame.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultInput.ini">
+      <Filter>Config</Filter>
+    </None>
+    <Filter Include="Source\ICPONDs">
+      <UniqueIdentifier>{1B28A2F3-7BE0-3928-B338-5E888DB31A17}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\ICPONDs\BoatPawn.cpp">
+      <Filter>Source\ICPONDs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ICPONDs\BoatPawn.h">
+      <Filter>Source\ICPONDs</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ICPONDs\CurrentVolume.cpp">
+      <Filter>Source\ICPONDs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ICPONDs\CurrentVolume.h">
+      <Filter>Source\ICPONDs</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ICPONDs\FishingBobber.cpp">
+      <Filter>Source\ICPONDs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ICPONDs\FishingBobber.h">
+      <Filter>Source\ICPONDs</Filter>
+    </ClInclude>
+    <None Include="..\..\Source\ICPONDs\ICPONDs.Build.cs">
+      <Filter>Source\ICPONDs</Filter>
+    </None>
+    <ClCompile Include="..\..\Source\ICPONDs\ICPONDs.cpp">
+      <Filter>Source\ICPONDs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ICPONDs\ICPONDs.h">
+      <Filter>Source\ICPONDs</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ICPONDs\IslandMarker.cpp">
+      <Filter>Source\ICPONDs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ICPONDs\IslandMarker.h">
+      <Filter>Source\ICPONDs</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ICPONDs\PondGameModeBase.cpp">
+      <Filter>Source\ICPONDs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ICPONDs\PondGameModeBase.h">
+      <Filter>Source\ICPONDs</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ICPONDs\PondTestSpawner.cpp">
+      <Filter>Source\ICPONDs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ICPONDs\PondTestSpawner.h">
+      <Filter>Source\ICPONDs</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\ICPONDs\SimpleWaterPlane.cpp">
+      <Filter>Source\ICPONDs</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\ICPONDs\SimpleWaterPlane.h">
+      <Filter>Source\ICPONDs</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

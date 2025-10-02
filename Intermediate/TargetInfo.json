@@ -1,0 +1,14 @@
+{
+	"Targets": [
+		{
+			"Name": "ICPONDs",
+			"Path": "..\\Source\\ICPONDs.Target.cs",
+			"Type": "Game"
+		},
+		{
+			"Name": "ICPONDsEditor",
+			"Path": "..\\Source\\ICPONDsEditor.Target.cs",
+			"Type": "Editor"
+		}
+	]
+}
