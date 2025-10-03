@@ -5,7 +5,14 @@
 			"guid": "00000000000000000000000000000000",
 			"description": "Default Uncontrolled Changelist",
 			"files": [
-				"D:/D_Documents/game/ICPONDS/ICPONDs (1)/ICPONDs/Content/ICPOND.umap"
+				"D:/D_Documents/game/ICPONDS/ICPONDs (1)/ICPONDs/Content/ICPOND.umap",
+				"D:/D_Documents/game/ICPONDS/ICPONDs (1)/ICPONDs/Content/Boat/MyBoatPawn.uasset",
+				"D:/D_Documents/game/ICPONDS/ICPONDs (1)/ICPONDs/Content/Core/MyPondGameModeBase.uasset",
+				"D:/D_Documents/game/ICPONDS/ICPONDs (1)/ICPONDs/Content/Boat/Boat/StaticMeshes/Boat.uasset",
+				"D:/D_Documents/game/ICPONDS/ICPONDs (1)/ICPONDs/Content/Boat/Boat/StaticMeshes/Boat1/Boat1_texture_0.uasset",
+				"D:/D_Documents/game/ICPONDS/ICPONDs (1)/ICPONDs/Content/Boat/Boat/StaticMeshes/Boat1_texture_0.uasset",
+				"D:/D_Documents/game/ICPONDS/ICPONDs (1)/ICPONDs/Content/Boat/Boat/StaticMeshes/Boat1_material_0.uasset",
+				"D:/Main System/Unreal Engine/UE_5.6/Engine/Plugins/Interchange/Assets/Content/gltf/M_Default.uasset"
 			]
 		}
 	]

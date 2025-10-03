@@ -12,34 +12,52 @@ ABoatPawn::ABoatPawn()
 {
     PrimaryActorTick.bCanEverTick = true;
 
+    // Main boat mesh - use your custom boat mesh
     BoatMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoatMesh"));
     SetRootComponent(BoatMesh);
     BoatMesh->SetSimulatePhysics(true);
-    BoatMesh->SetLinearDamping(0.1f); // Very low damping for responsive buoyancy
-    BoatMesh->SetAngularDamping(2.5f);
-    BoatMesh->SetEnableGravity(true); // Enable gravity for buoyancy
+    BoatMesh->SetLinearDamping(0.15f);
+    BoatMesh->SetAngularDamping(3.0f);
+    BoatMesh->SetEnableGravity(true);
     BoatMesh->BodyInstance.bUseCCD = true;
-    BoatMesh->SetMassOverrideInKg(NAME_None, 200.f); // Lighter boat for easier floating
-    BoatMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); // Ensure collision is enabled
-    BoatMesh->SetCollisionProfileName(TEXT("BlockAll")); // Use standard collision profile
+    BoatMesh->SetMassOverrideInKg(NAME_None, 180.f);
+    BoatMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    BoatMesh->SetCollisionProfileName(TEXT("BlockAll"));
 
-    // Use an engine basic shape so no content is required.
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> HullMeshObj(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-    if (HullMeshObj.Succeeded())
+    // Load your custom boat mesh
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CustomBoatMeshObj(TEXT("/Game/Boat/Boat/StaticMeshes/Boat"));
+    if (CustomBoatMeshObj.Succeeded())
     {
-        BoatMesh->SetStaticMesh(HullMeshObj.Object);
-        BoatMesh->SetWorldScale3D(FVector(1.5f, 0.6f, 0.4f));
+        BoatMesh->SetStaticMesh(CustomBoatMeshObj.Object);
+        // Scale up the boat and rotate it to face the correct direction
+        BoatMesh->SetWorldScale3D(FVector(1.5f, 1.5f, 1.5f)); // Make it 50% bigger
+        BoatMesh->SetRelativeRotation(FRotator(0.f, 90.f, 0.f)); // Rotate 90 degrees to face forward
+    }
+    else
+    {
+        // Fallback to basic shape if custom mesh fails to load
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> FallbackMeshObj(TEXT("/Engine/BasicShapes/Cube.Cube"));
+        if (FallbackMeshObj.Succeeded())
+        {
+            BoatMesh->SetStaticMesh(FallbackMeshObj.Object);
+            BoatMesh->SetWorldScale3D(FVector(5.0f, 2.0f, 0.8f));
+        }
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load custom boat mesh, using fallback"));
     }
 
+    // Camera setup for cinematic third-person rowing experience
     SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
     SpringArm->SetupAttachment(BoatMesh);
-    SpringArm->TargetArmLength = 900.f;
-    SpringArm->bDoCollisionTest = false;
-    SpringArm->bUsePawnControlRotation = false;
-    SpringArm->SetRelativeRotation(FRotator(-50.f, 0.f, 0.f));
+    SpringArm->TargetArmLength = 600.f; // Distance from boat
+    SpringArm->bDoCollisionTest = true; // Enable collision to avoid clipping
+    SpringArm->bUsePawnControlRotation = false; // Fixed camera angle
+    SpringArm->SetRelativeRotation(FRotator(-30.f, 0.f, 0.f)); // Downward angle to see boat
+    SpringArm->SetRelativeLocation(FVector(-100.f, 0.f, 80.f)); // Behind and above boat
+    SpringArm->SocketOffset = FVector(0.f, 0.f, 20.f); // Raise camera slightly
 
-    Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+    Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
     Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+    Camera->SetFieldOfView(70.f); // Wide FOV to see the boat
 
     AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
@@ -54,7 +72,7 @@ void ABoatPawn::BeginPlay()
     {
         CurrentLocation.Z = 50.f; // Place 50cm above water level
         SetActorLocation(CurrentLocation);
-        UE_LOG(LogTemp, Warning, TEXT("Boat repositioned above water at Z: %.1f"), CurrentLocation.Z);
+        UE_LOG(LogTemp, Warning, TEXT("Custom boat repositioned above water at Z: %.1f"), CurrentLocation.Z);
     }
     
     // Initialize water level to 0 as default
@@ -79,19 +97,19 @@ void ABoatPawn::Tick(float DeltaTime)
             BoatMesh->SetPhysicsLinearVelocity(FVector::ZeroVector);
             BoatMesh->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
             
-            UE_LOG(LogTemp, Error, TEXT("EMERGENCY TELEPORT - Boat was at Z: %.1f, moved to Z: %.1f"), 
+            UE_LOG(LogTemp, Error, TEXT("EMERGENCY TELEPORT - Custom boat was at Z: %.1f, moved to Z: %.1f"), 
                 CurrentLocation.Z, SafeLocation.Z);
         }
         
         // Apply buoyancy forces
         ApplyBuoyancy(DeltaTime);
 
-        const FVector Forward = GetActorForwardVector();
-        const FVector Force = Forward * (ThrottleInput * MaxThrust);
-        BoatMesh->AddForce(Force);
+        // Update rowing mechanics (no visual oar updates)
+        UpdateOarStrokes(DeltaTime);
+        ApplyRowingForces(DeltaTime);
 
-        const FVector Torque = FVector(0.f, 0.f, SteeringInput * TurnTorque);
-        BoatMesh->AddTorqueInRadians(Torque);
+        // Update camera dynamics for cinematic feel
+        UpdateCameraDynamics(DeltaTime);
 
         // Cap speed
         const FVector Vel = BoatMesh->GetPhysicsLinearVelocity();
@@ -106,19 +124,153 @@ void ABoatPawn::Tick(float DeltaTime)
     }
 }
 
+void ABoatPawn::UpdateOarStrokes(float DeltaTime)
+{
+    // Update left oar stroke timing
+    if (bLeftOarActive)
+    {
+        LeftOarStrokeTime += DeltaTime;
+        if (LeftOarStrokeTime >= StrokeRecoveryTime)
+        {
+            bLeftOarActive = false;
+            LeftOarStrokeTime = 0.f;
+        }
+    }
+
+    // Update right oar stroke timing
+    if (bRightOarActive)
+    {
+        RightOarStrokeTime += DeltaTime;
+        if (RightOarStrokeTime >= StrokeRecoveryTime)
+        {
+            bRightOarActive = false;
+            RightOarStrokeTime = 0.f;
+        }
+    }
+
+    // Debug display rowing state
+    if (GEngine && GetWorld()->GetTimeSeconds() - LastDebugTime > 0.5f)
+    {
+        FString RowDebug = FString::Printf(TEXT("Left Oar: %s (%.1fs) | Right Oar: %s (%.1fs)"), 
+            bLeftOarActive ? TEXT("ROWING") : TEXT("Ready"), LeftOarStrokeTime,
+            bRightOarActive ? TEXT("ROWING") : TEXT("Ready"), RightOarStrokeTime);
+        GEngine->AddOnScreenDebugMessage(-1, 0.6f, FColor::Cyan, RowDebug);
+        LastDebugTime = GetWorld()->GetTimeSeconds();
+    }
+}
+
+void ABoatPawn::UpdateCameraDynamics(float DeltaTime)
+{
+    if (!SpringArm || !Camera) return;
+
+    // Base camera position and rotation
+    FVector BaseLocation = FVector(-100.f, 0.f, 80.f);
+    FRotator BaseRotation = FRotator(-30.f, 0.f, 0.f);
+    
+    // Add subtle camera shake when rowing
+    FVector CameraShake = FVector::ZeroVector;
+    float ShakeIntensity = 0.f;
+    
+    if (bLeftOarActive || bRightOarActive)
+    {
+        // Calculate shake based on stroke progress
+        float LeftProgress = bLeftOarActive ? (LeftOarStrokeTime / StrokePowerDuration) : 0.f;
+        float RightProgress = bRightOarActive ? (RightOarStrokeTime / StrokePowerDuration) : 0.f;
+        
+        ShakeIntensity = FMath::Max(LeftProgress, RightProgress) * CameraShakeIntensity;
+        
+        // Only shake during power stroke
+        if (LeftProgress <= 1.f || RightProgress <= 1.f)
+        {
+            CameraShake = FVector(
+                FMath::Sin(GetWorld()->GetTimeSeconds() * 15.f) * ShakeIntensity,
+                FMath::Cos(GetWorld()->GetTimeSeconds() * 12.f) * ShakeIntensity * 0.5f,
+                FMath::Sin(GetWorld()->GetTimeSeconds() * 18.f) * ShakeIntensity * 0.3f
+            );
+        }
+    }
+    
+    // Add slight camera movement based on boat velocity for dynamic feel
+    FVector BoatVelocity = BoatMesh->GetPhysicsLinearVelocity();
+    float VelocityInfluence = FMath::Clamp(BoatVelocity.Size() / MaxSpeed, 0.f, 1.f);
+    
+    // Camera leans slightly based on turning
+    FVector AngularVel = BoatMesh->GetPhysicsAngularVelocityInRadians();
+    float TurnLean = AngularVel.Z * 10.f; // Convert to degrees
+    
+    // Dynamic camera positioning
+    FVector DynamicOffset = CameraShake + FVector(
+        -VelocityInfluence * 15.f, // Pull back slightly when moving fast
+        TurnLean * 2.f, // Lean with turns
+        VelocityInfluence * 8.f // Rise slightly when moving fast
+    );
+    
+    FRotator DynamicRotation = BaseRotation + FRotator(
+        VelocityInfluence * -5.f, // Look down more when moving fast
+        TurnLean * 0.5f, // Slight yaw with turns
+        TurnLean * 0.3f // Slight roll with turns
+    );
+    
+    // Smoothly interpolate to target position and rotation
+    FVector TargetLocation = BaseLocation + DynamicOffset;
+    FVector CurrentLocation = SpringArm->GetRelativeLocation();
+    FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, DeltaTime, CameraFollowSpeed);
+    SpringArm->SetRelativeLocation(NewLocation);
+    
+    FRotator CurrentRotation = SpringArm->GetRelativeRotation();
+    FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DynamicRotation, DeltaTime, CameraFollowSpeed);
+    SpringArm->SetRelativeRotation(NewRotation);
+}
+
+void ABoatPawn::ApplyRowingForces(float DeltaTime)
+{
+    if (!BoatMesh) return;
+
+    const FVector BoatForward = GetActorForwardVector();
+    const FVector BoatRight = GetActorRightVector();
+    const FVector BoatLocation = GetActorLocation();
+
+    // Calculate oar positions (offset from boat center) - no visual oars, just force points
+    const FVector LeftOarPosition = BoatLocation - (BoatRight * OarLeverArm);
+    const FVector RightOarPosition = BoatLocation + (BoatRight * OarLeverArm);
+
+    // Apply left oar force
+    if (bLeftOarActive && LeftOarStrokeTime <= StrokePowerDuration)
+    {
+        // Calculate force ramp (strongest at beginning of stroke)
+        float ForceMultiplier = 1.f - (LeftOarStrokeTime / StrokePowerDuration);
+        ForceMultiplier = FMath::Pow(ForceMultiplier, 0.5f); // Square root for smoother curve
+
+        // Forward force from left oar
+        FVector LeftOarForce = BoatForward * (OarForce * ForceMultiplier);
+        BoatMesh->AddForceAtLocation(LeftOarForce, LeftOarPosition);
+
+        // Turning moment (left oar creates clockwise turn when viewed from above)
+        FVector TurningForce = -BoatRight * (OarForce * ForceMultiplier * 0.3f);
+        BoatMesh->AddForceAtLocation(TurningForce, LeftOarPosition);
+    }
+
+    // Apply right oar force
+    if (bRightOarActive && RightOarStrokeTime <= StrokePowerDuration)
+    {
+        // Calculate force ramp (strongest at beginning of stroke)
+        float ForceMultiplier = 1.f - (RightOarStrokeTime / StrokePowerDuration);
+        ForceMultiplier = FMath::Pow(ForceMultiplier, 0.5f); // Square root for smoother curve
+
+        // Forward force from right oar
+        FVector RightOarForce = BoatForward * (OarForce * ForceMultiplier);
+        BoatMesh->AddForceAtLocation(RightOarForce, RightOarPosition);
+
+        // Turning moment (right oar creates counter-clockwise turn when viewed from above)
+        FVector TurningForce = BoatRight * (OarForce * ForceMultiplier * 0.3f);
+        BoatMesh->AddForceAtLocation(TurningForce, RightOarPosition);
+    }
+}
+
 void ABoatPawn::ApplyBuoyancy(float DeltaTime)
 {
     const FVector BoatLocation = GetActorLocation();
     const float DistanceUnderWater = WaterLevel - BoatLocation.Z;
-    
-    // Debug logging to see what's happening
-    if (GEngine && GetWorld()->GetTimeSeconds() - LastDebugTime > 1.0f)
-    {
-        FString DebugMsg = FString::Printf(TEXT("Boat Z: %.1f, Water Level: %.1f, Distance Under: %.1f"), 
-            BoatLocation.Z, WaterLevel, DistanceUnderWater);
-        GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, DebugMsg);
-        LastDebugTime = GetWorld()->GetTimeSeconds();
-    }
     
     // Apply buoyancy forces based on submersion
     if (DistanceUnderWater > 0.f)
@@ -189,7 +341,7 @@ void ABoatPawn::ApplyWaterDrag(float DeltaTime)
         if (Speed > KINDA_SMALL_NUMBER)
         {
             FVector DragDir = -V.GetSafeNormal();
-            float DragMag = WaterDensity * Speed * Speed * 0.0015f * SubmersionRatio;
+            float DragMag = WaterDensity * Speed * Speed * 0.002f * SubmersionRatio; // Slightly higher drag for rowing
             BoatMesh->AddForce(DragDir * DragMag);
         }
 
@@ -197,7 +349,7 @@ void ABoatPawn::ApplyWaterDrag(float DeltaTime)
         FVector W = BoatMesh->GetPhysicsAngularVelocityInRadians();
         if (!W.IsNearlyZero())
         {
-            BoatMesh->AddTorqueInRadians(-W * 3000.f * SubmersionRatio * DeltaTime);
+            BoatMesh->AddTorqueInRadians(-W * 4000.f * SubmersionRatio * DeltaTime); // Higher angular drag
         }
     }
 }
@@ -205,20 +357,36 @@ void ABoatPawn::ApplyWaterDrag(float DeltaTime)
 void ABoatPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     check(PlayerInputComponent);
-    PlayerInputComponent->BindAxis("MoveForward", this, &ABoatPawn::MoveForward);
-    PlayerInputComponent->BindAxis("MoveRight", this, &ABoatPawn::MoveRight);
+    
+    // Rowing controls - A for left oar, D for right oar
+    PlayerInputComponent->BindAction("RowLeft", IE_Pressed, this, &ABoatPawn::RowLeftOar);
+    PlayerInputComponent->BindAction("RowRight", IE_Pressed, this, &ABoatPawn::RowRightOar);
+    
+    // Keep fishing controls
     PlayerInputComponent->BindAction("Fish", IE_Pressed, this, &ABoatPawn::StartFish);
     PlayerInputComponent->BindAction("Fish", IE_Released, this, &ABoatPawn::StopFish);
 }
 
-void ABoatPawn::MoveForward(float Value)
+void ABoatPawn::RowLeftOar()
 {
-    ThrottleInput = FMath::Clamp(Value, -1.f, 1.f);
+    // Start a left oar stroke if not already active
+    if (!bLeftOarActive)
+    {
+        bLeftOarActive = true;
+        LeftOarStrokeTime = 0.f;
+        UE_LOG(LogTemp, Log, TEXT("Left oar stroke started"));
+    }
 }
 
-void ABoatPawn::MoveRight(float Value)
+void ABoatPawn::RowRightOar()
 {
-    SteeringInput = FMath::Clamp(Value, -1.f, 1.f);
+    // Start a right oar stroke if not already active
+    if (!bRightOarActive)
+    {
+        bRightOarActive = true;
+        RightOarStrokeTime = 0.f;
+        UE_LOG(LogTemp, Log, TEXT("Right oar stroke started"));
+    }
 }
 
 void ABoatPawn::StartFish()
