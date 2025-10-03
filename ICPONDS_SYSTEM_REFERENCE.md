@@ -37,33 +37,23 @@ UCameraComponent* Camera;              // Dynamic third-person camera
 ### Custom Boat Mesh System
 - **Custom Mesh**: Uses your boat mesh from `/Game/Boat/Boat/StaticMeshes/Boat`
 - **Single Component**: Clean design with just one mesh instead of multiple basic shapes
-- **Fallback Safety**: Falls back to basic cube if custom mesh fails to load
+- **Proper Orientation**: No rotation needed since you fixed it in Blender
 - **Proper Physics**: Custom mesh has full physics simulation and collision
-- **Scalable**: Can adjust scale if needed (currently 1:1:1)
+- **Scaled Up**: 1.5x larger for better visibility and presence
 
-### Simplified Design
-- **No Visual Oars**: Removed oar meshes and animations for cleaner look
-- **No Extra Components**: Eliminated cabin, roof, mast, flag components
-- **Custom Mesh Only**: Single beautiful boat mesh represents entire boat
-- **Physics-Only Rowing**: Rowing forces applied without visual oar representation
-- **Streamlined Code**: Much simpler boat setup focusing on your custom asset
+### Smooth WASD Movement System
+- **W/S Keys**: Forward and backward movement with realistic boat acceleration
+- **A/D Keys**: Left and right turning with realistic boat turning physics
+- **Smooth Controls**: Continuous analog input for natural boat handling
+- **Realistic Physics**: Uses thrust forces and torque for authentic boat feel
+- **Speed Limiting**: Maximum speed cap prevents unrealistic acceleration
 
-### Rowing Physics (Invisible Oars)
-- **Force Application**: Rowing forces still applied at proper oar positions
-- **No Visual Animation**: No oar meshes to animate or manage
-- **Clean Interface**: Rowing works exactly the same, just without visual clutter
-- **Physics Points**: Left and right oar force points calculated from boat center
-
-### Realistic Boat Design
-- **Hull**: Proper boat-shaped hull (5m long × 2m wide × 0.8m tall) 
-- **Cabin/Wheelhouse**: White cabin structure positioned forward
-- **Roof**: Blue roof on top of cabin for weather protection
-- **Mast & Flag**: Tall mast with yellow triangular flag (like reference image)
-- **Cockpit**: Open area behind cabin with rowing seat
-- **Gunwales**: Side rails running length of boat for safety
-- **Bow**: Pointed front section for cutting through water
-- **Transom**: Flat stern section (back of boat)
-- **Oars**: Properly scaled 3-meter rowing oars
+### Movement Physics
+- **Throttle Input**: W/S keys control forward/backward thrust (45,000N max force)
+- **Steering Input**: A/D keys control turning torque (150,000N·m max torque) 
+- **Realistic Drag**: Water drag increases with speed for authentic feel
+- **Angular Damping**: Boat doesn't spin unrealistically when turning
+- **Momentum**: Boat maintains momentum and doesn't stop instantly
 
 ### Cinematic Camera System
 - **Position**: Positioned behind and above boat (600cm arm length)
@@ -87,7 +77,7 @@ BaseRotation = FRotator(-25.f, 0.f, 0.f); // Downward angle to see boat
 1. **Rowing Shake**: Subtle camera movement during power strokes
 2. **Velocity Response**: Camera adjusts based on boat speed
 3. **Turn Banking**: Camera leans slightly during turns
-4. **Smooth Interpolation**: Natural camera movement without jarring
+4. **Smooth Interpolation**: Natural camera movement without jaring
 5. **Collision Detection**: Camera avoids clipping through objects
 
 ### Rowing Physics Parameters
@@ -251,41 +241,49 @@ PublicDependencyModuleNames.AddRange(new string[] {
 
 ---
 
-## ?? Input System - Immersive Rowing Controls
+## ?? Input System - WASD Movement + Mouse Camera
 
 ### Controls (DefaultInput.ini)
-- **Left Oar**: A Key / Left Shoulder Button (Gamepad)
-- **Right Oar**: D Key / Right Shoulder Button (Gamepad)
+- **Movement**: W/A/S/D Keys / Left Stick (Gamepad)
+- **Camera Look**: Mouse Movement / Right Stick (Gamepad)
 - **Fishing**: E Key / Left Mouse Button
 - **Console**: ` (Backtick) for debug commands
 
-### Cinematic Third-Person Experience
-- **Dynamic Camera**: Close third-person view with realistic movement
-- **Visual Feedback**: Oars move in sync with player inputs
-- **Camera Effects**: Subtle shake during strokes, leans during turns
-- **Realistic Timing**: Must wait for stroke recovery for maximum efficiency
-- **Natural Feel**: Boat dimensions and physics match real rowing boats
+### Enhanced Control Experience
+- **Boat Movement**: WASD for smooth acceleration and steering
+- **Free-Look Camera**: Mouse for full camera control around the boat
+- **Combined Control**: Move with WASD while looking around with mouse
+- **Dynamic Effects**: Camera still responds to boat movement automatically
+- **Adjustable Sensitivity**: Separate X/Y mouse sensitivity settings
 
-### Rowing Technique Guide
-- **Forward Motion**: Alternate A and D for efficient rowing (A-D-A-D rhythm)
-- **Turn Right**: Use only A (left oar) repeatedly - camera leans with turn
-- **Turn Left**: Use only D (right oar) repeatedly - camera leans with turn
-- **Quick Turn**: Single oar strokes for precise maneuvering
-- **Maximum Speed**: Rapid alternating strokes (rhythm is key!)
-- **Cinematic Rowing**: Camera responds to your rowing intensity and boat movement
+### Camera Control Features
+- **Mouse X**: Rotate camera left/right around the boat (yaw)
+- **Mouse Y**: Tilt camera up/down (pitch) with angle limits
+- **Angle Limits**: -80° to +10° vertical range for practical viewing
+- **Smart Blending**: Mouse control takes priority over automatic effects
+- **Sensitivity Control**: Adjustable horizontal (1.0) and vertical (0.7) sensitivity
+
+### Movement + Camera Technique Guide
+- **Forward + Look**: W key while moving mouse to look around while moving
+- **Reverse + Check**: S key while looking behind to reverse safely
+- **Turn + Observe**: A/D steering while mouse looking to see around turns
+- **Free Exploration**: Use mouse to examine your boat and surroundings
+- **Cinematic Moments**: Automatic effects still add immersion during movement
 
 ### Camera Dynamics
-- **Stroke Response**: Camera shakes subtly during powerful rowing strokes
-- **Speed Effects**: Camera pulls back and rises during high-speed movement
-- **Turn Banking**: Camera leans naturally with boat turns for realism
-- **Smooth Movement**: All camera changes interpolated for natural feel
-- **Collision Aware**: Camera automatically avoids obstacles and clipping
+- **Mouse Priority**: When mouse is moved, automatic effects are reduced (30% strength)
+- **Smooth Blending**: Automatic effects blend naturally with mouse control
+- **Movement Response**: Camera still shakes and adjusts with boat movement
+- **Speed Effects**: Camera still responds to acceleration and turning
+- **Natural Feel**: Mouse control feels responsive while keeping boat physics effects
 
 ### Input Bindings
 ```cpp
 // In BoatPawn::SetupPlayerInputComponent
-PlayerInputComponent->BindAction("RowLeft", IE_Pressed, this, &ABoatPawn::RowLeftOar);
-PlayerInputComponent->BindAction("RowRight", IE_Pressed, this, &ABoatPawn::RowRightOar);
+PlayerInputComponent->BindAxis("MoveForward", this, &ABoatPawn::MoveForward);
+PlayerInputComponent->BindAxis("MoveRight", this, &ABoatPawn::MoveRight);
+PlayerInputComponent->BindAxis("Turn", this, &ABoatPawn::MouseX);
+PlayerInputComponent->BindAxis("LookUp", this, &ABoatPawn::MouseY);
 PlayerInputComponent->BindAction("Fish", IE_Pressed, this, &ABoatPawn::StartFish);
 PlayerInputComponent->BindAction("Fish", IE_Released, this, &ABoatPawn::StopFish);
 ```
@@ -380,26 +378,26 @@ PlayerInputComponent->BindAction("Fish", IE_Released, this, &ABoatPawn::StopFish
 ## ?? System Status: WORKING ?
 
 The ICPONDs custom boat system is fully functional with:
-- **Your custom boat mesh** from `/Game/Boat/Boat/StaticMeshes/Boat` as the single boat component
-- **Clean design** with no visual clutter - just your beautiful boat mesh
-- **Physics-only rowing** - A & D keys apply forces without visual oar animations  
-- **Cinematic third-person camera** with dynamic effects and realistic movement
-- **Individual oar control** using A & D keys for realistic rowing technique
-- **Camera responsiveness** to rowing intensity, speed, and turning movements
-- **Proper boat physics** with realistic weight distribution and buoyancy
+- **Your custom boat mesh** from `/Game/Boat/Boat/StaticMeshes/Boat` with proper orientation
+- **Smooth WASD movement** - traditional controls with realistic boat physics
+- **Full mouse camera control** - look around freely while maintaining cinematic effects
+- **Clean design** with no oar system - just pure boat movement
+- **Hybrid camera system** - mouse control + automatic cinematic effects
+- **Intuitive controls** using W/A/S/D for movement + mouse for camera
+- **Smart effect blending** - automatic effects reduced when mouse is active
+- **Proper boat physics** with realistic momentum, drag, and buoyancy
 - **Working fishing mechanics** accessible from your custom boat
 - **Complete test environment** with islands, currents, and dynamic water
 - **Comprehensive debug and recovery systems** for robust gameplay
-- **Fallback protection** - safe fallback to basic cube if custom mesh fails
 
-**Ready for custom boat adventures and gameplay expansion!** ???????
+**Ready for free-look sailing adventures and gameplay expansion!** ???????
 
-### Your Custom Boat Experience:
-1. **Your Design**: Uses your custom boat mesh instead of basic shapes
-2. **Clean Look**: No oar animations or extra visual components to distract
-3. **Physics Rowing**: Rowing forces still work perfectly without visual clutter
-4. **Dynamic Camera**: Positioned to showcase your custom boat design
-5. **Fallback Safety**: Automatically falls back to basic shape if mesh load fails
-6. **Full Physics**: Your custom mesh has complete physics simulation and collision
-7. **Cinematic Feel**: Camera responds to boat movement for immersive gameplay
-8. **Scale Adjustable**: Can easily adjust boat scale if needed (currently 1:1:1)
+### Your Enhanced Control Experience:
+1. **Fixed Orientation**: Your Blender-corrected boat faces the right direction
+2. **WASD Movement**: Intuitive boat movement with realistic physics
+3. **Mouse Camera**: Full free-look control around your boat
+4. **Smart Blending**: Automatic cinematic effects when not using mouse
+5. **Natural Feel**: Mouse control feels responsive and smooth
+6. **Angle Limits**: Practical viewing range prevents disorienting camera angles
+7. **Sensitivity Control**: Adjustable mouse sensitivity for perfect feel
+8. **Best of Both**: Manual control when you want it, cinematic effects when you don't

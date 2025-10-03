@@ -64,28 +64,37 @@ private:
     UPROPERTY(VisibleAnywhere, Category="Components")
     UCameraComponent* Camera; // Third-person camera
 
-    // Rowing System Properties
-    UPROPERTY(EditAnywhere, Category="Boat|Rowing")
-    float OarForce = 25000.f; // Force per oar stroke
+    // Movement System Properties
+    UPROPERTY(EditAnywhere, Category="Boat|Movement")
+    float MaxThrust = 45000.f; // Forward/backward thrust force
 
-    UPROPERTY(EditAnywhere, Category="Boat|Rowing")
-    float OarLeverArm = 150.f; // Distance from boat center to oar pivot (cm)
+    UPROPERTY(EditAnywhere, Category="Boat|Movement")
+    float TurnTorque = 150000.f; // Turning force
 
-    UPROPERTY(EditAnywhere, Category="Boat|Rowing")
-    float StrokeRecoveryTime = 0.8f; // Time for oar to return to neutral
-
-    UPROPERTY(EditAnywhere, Category="Boat|Rowing")
-    float StrokePowerDuration = 0.3f; // Time during which stroke applies force
+    UPROPERTY(EditAnywhere, Category="Boat|Movement")
+    float MaxSpeed = 1200.f; // Maximum boat speed (cm/s)
 
     // Camera System Properties
     UPROPERTY(EditAnywhere, Category="Boat|Camera")
-    float CameraShakeIntensity = 2.f; // How much camera shakes during rowing
+    float CameraShakeIntensity = 1.f; // How much camera shakes during movement
 
     UPROPERTY(EditAnywhere, Category="Boat|Camera")
     float CameraFollowSpeed = 3.f; // How smoothly camera follows boat movement
 
-    UPROPERTY(EditAnywhere, Category="Boat|Movement")
-    float MaxSpeed = 800.f; // Reduced for rowing (cm/s)
+    UPROPERTY(EditAnywhere, Category="Boat|Camera")
+    float MouseSensitivityX = 1.f; // Horizontal mouse sensitivity
+
+    UPROPERTY(EditAnywhere, Category="Boat|Camera")
+    float MouseSensitivityY = 0.7f; // Vertical mouse sensitivity
+
+    UPROPERTY(EditAnywhere, Category="Boat|Camera")
+    float MinPitchAngle = -80.f; // Maximum upward camera angle
+
+    UPROPERTY(EditAnywhere, Category="Boat|Camera")
+    float MaxPitchAngle = 10.f; // Maximum downward camera angle
+
+    UPROPERTY(EditAnywhere, Category="Boat|Camera")
+    bool bEnableMouseControl = true; // Toggle mouse camera control
 
     // Enhanced Water Physics
     UPROPERTY(EditAnywhere, Category="Boat|Water Physics")
@@ -100,25 +109,23 @@ private:
     UPROPERTY(EditAnywhere, Category="Boat|Water Physics")
     float SubmersionDepth = 80.f; // Reduced for more responsive buoyancy
 
-    // Rowing state variables
-    float LeftOarInput = 0.f;
-    float RightOarInput = 0.f;
-    float LeftOarStrokeTime = 0.f;
-    float RightOarStrokeTime = 0.f;
-    bool bLeftOarActive = false;
-    bool bRightOarActive = false;
+    // Movement state variables
+    float ThrottleInput = 0.f;
+    float SteeringInput = 0.f;
+    float CameraYawInput = 0.f; // Mouse X input accumulation
+    float CameraPitchInput = 0.f; // Mouse Y input accumulation
     float LastDebugTime = 0.f; // For debug logging
 
     // Input functions
-    void RowLeftOar();
-    void RowRightOar();
+    void MoveForward(float Value);
+    void MoveRight(float Value);
+    void MouseX(float Value);
+    void MouseY(float Value);
     void StartFish();
     void StopFish();
 
     // Physics functions
     void ApplyWaterDrag(float DeltaTime);
     void ApplyBuoyancy(float DeltaTime);
-    void ApplyRowingForces(float DeltaTime);
-    void UpdateOarStrokes(float DeltaTime);
     void UpdateCameraDynamics(float DeltaTime);
 };
