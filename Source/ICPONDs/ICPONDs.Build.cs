@@ -6,10 +6,13 @@ public class ICPONDs : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "PhysicsCore",
-            "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG"
+        PublicDependencyModuleNames.AddRange(new string[] { 
+            "PhysicsCore", "Core", "CoreUObject", "Engine", "InputCore", 
+            "EnhancedInput", "UMG", "AudioMixer", "AudioPlatformConfiguration"
         });
 
-        PrivateDependencyModuleNames.AddRange(new string[] { });
+        PrivateDependencyModuleNames.AddRange(new string[] { 
+            "Slate", "SlateCore", "ToolMenus", "AudioMixer"
+        });
     }
 }

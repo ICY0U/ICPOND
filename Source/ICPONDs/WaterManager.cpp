@@ -3,7 +3,6 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "BoatPawn.h"
-#include "FishingBobber.h"
 
 AWaterManager::AWaterManager()
 {
@@ -52,17 +51,6 @@ void AWaterManager::Tick(float DeltaTime)
                     UE_LOG(LogTemp, Warning, TEXT("Updated Boat - Location: %s, Calculated Water Height: %.2f"), 
                         *BoatPawn->GetActorLocation().ToString(), WaveHeight);
                 }
-            }
-        }
-
-        // Update all fishing bobbers
-        for (TActorIterator<AFishingBobber> ActorItr(World); ActorItr; ++ActorItr)
-        {
-            AFishingBobber* Bobber = *ActorItr;
-            if (Bobber)
-            {
-                const float WaveHeight = GetWaterHeightAtLocation(Bobber->GetActorLocation());
-                Bobber->SetWaterLevel(WaveHeight);
             }
         }
     }
